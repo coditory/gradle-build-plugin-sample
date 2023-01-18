@@ -1,8 +1,6 @@
 name: Build
 
-on:
-  workflow_dispatch:
-  push:
+on: [pull_request, push, workflow_dispatch]
 
 jobs:
   build:
@@ -10,14 +8,38 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Skip duplicates and docs
+        id: skip
+        uses: fkirc/skip-duplicate-actions@v5
         with:
-          fetch-depth: 0
-      - name: Set up JDK 11
-        uses: actions/setup-java@v1
+          paths_ignore: '["**/README.md", "LICENSE", ".gitignore", ".editorconfig", ".idea/**"]'
+
+      - name: Validate gradle wrapper
+        if: steps.skip.outputs.should_skip != 'true'
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Setup JDK
+        if: steps.skip.outputs.should_skip != 'true'
+        uses: actions/setup-java@v3
         with:
-          java-version: 11
-      - name: 'Build with Gradle: single-module-project'
-        run: cd single-module-project && ./gradlew build && cd ..
+          java-version: 17
+          cache: gradle
+          distribution: temurin
+
+      - name: 'Build with Gradle: java-project'
+        if: steps.skip.outputs.should_skip != 'true'
+        run: cd java-project && ./gradlew build && cd ..
+
+      - name: 'Build with Gradle: kotlin-project'
+        if: steps.skip.outputs.should_skip != 'true'
+        run: cd kotlin-project && ./gradlew build && cd ..
+
+      - name: 'Build with Gradle: groovy-project'
+        if: steps.skip.outputs.should_skip != 'true'
+        run: cd groovy-project && ./gradlew build && cd ..
+
       - name: 'Build with Gradle: multi-module-project'
+        if: steps.skip.outputs.should_skip != 'true'
         run: cd multi-module-project && ./gradlew build && cd ..
