@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "1.9.24"
-    id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
+    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
     id("com.coditory.build") version "0.1.20"
 }
 
